@@ -22,11 +22,11 @@ Welcome to the repository for our TruthBot project. This is an web-hosted fake n
 2. **Activate the Virtual Environment**:
    - **Windows**:
      ```bash
-     AdBot\Scripts\activate
+     AlgoChatbot\Scripts\activate
      ```
    - **Linux/Mac**:
      ```bash
-     source AdBot/bin/activate
+     source AlgoChatbot/bin/activate
      ```
 3. **Run the Application**:
    - **Windows**:
