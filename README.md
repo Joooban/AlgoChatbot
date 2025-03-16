@@ -13,16 +13,16 @@ Welcome to the repository for our TruthBot project. This is an web-hosted fake n
 ### How to Create Environment:
 
 1. **Download the Databse**:
-   -[Click Here:](https://malayancollegesmindanaoo365-my.sharepoint.com/:x:/g/personal/jmorden_mcm_edu_ph/EQdC0ggGoNdPgs3yq3WaNnIBfou69F3OlHPYX0BSGQ__gw?e=3q6mFL)
+   [Click Here:](https://malayancollegesmindanaoo365-my.sharepoint.com/:x:/g/personal/jmorden_mcm_edu_ph/EQdC0ggGoNdPgs3yq3WaNnIBfou69F3OlHPYX0BSGQ__gw?e=3q6mFL)
 
-3. **Create a Virtual Environment**:
+2. **Create a Virtual Environment**:
    ```bash
    python -m venv nameofENV
    ```
    Example: ``python -m venv AlgoChatbot``
 
 
-4. **Activate the Virtual Environment**:
+3. **Activate the Virtual Environment**:
    - **Windows**:
      ```bash
      AlgoChatbot\Scripts\activate
@@ -32,7 +32,7 @@ Welcome to the repository for our TruthBot project. This is an web-hosted fake n
      source AlgoChatbot/bin/activate
      ```
    
-5. **Run the Application**:
+4. **Run the Application**:
    - **Windows**:
      ```bash
      streamlit run frontend.py
