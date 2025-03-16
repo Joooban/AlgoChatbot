@@ -53,7 +53,14 @@ def load_dataset(file_path):
 # Classify user input
 def classify_news(model, text):
     prediction = model.predict([text])[0]
-    return "Fake News" if prediction == 0 else "Real News"
+    # Get probability scores for each class
+    probabilities = model.predict_proba([text])[0]
+    fake_prob = probabilities[0]
+    real_prob = probabilities[1]
+    
+    result = "Fake News" if prediction == 0 else "Real News"
+    
+    return result, fake_prob, real_prob
 
 # Function to search dataset based on user query
 def search_dataset(df, query):
@@ -97,61 +104,49 @@ def query_gemini_api(model, df, user_input):
 def handle_conversation(dataset_path):
     df, model, accuracy, precision, recall, f1 = load_dataset(dataset_path)
 
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
-
-    # Add to your session state initialization
     if "classification_history" not in st.session_state:
         st.session_state.classification_history = []
 
-    for message in st.session_state.messages:
-        role_icon = "👤" if message["role"] == "user" else "🤖"
-        with st.chat_message(message["role"]):
-            st.markdown(f"{role_icon} {message['content']}")
-
-    user_input = st.chat_input("Ask about the dataset or paste a news article to classify...")
+    user_input = st.chat_input("Paste a news article to classify...")
 
     if user_input:
-        st.session_state.messages.append({"role": "user", "content": user_input})
-        with st.chat_message("user"):
-            st.markdown(f"👤 {user_input}")
-
-        # If input is a news article (longer than 5 words), classify it
-        if len(user_input.split()) > 5:
-            classification = classify_news(model, user_input)
+        # Classify the article and get probabilities
+        classification, fake_prob, real_prob = classify_news(model, user_input)
+        
+        # Store in history with timestamp and probabilities
+        import datetime
+        st.session_state.classification_history.append({
+            "text": user_input,
+            "classification": classification,
+            "fake_probability": fake_prob,
+            "real_probability": real_prob,
+            "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        })
+        
+        # Clear previous display
+        st.empty()
+        
+        # Display all classifications sequentially
+        for item in st.session_state.classification_history:
+            # Display user inputted article
+            st.subheader("Article")
+            st.markdown(f"{item['text']}")
             
-            # Store in history with timestamp
-            import datetime
-            st.session_state.classification_history.append({
-                "text": user_input[:50] + "..." if len(user_input) > 50 else user_input,
-                "classification": classification,
-                "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            })
+            # Display classification result with probabilities
+            st.subheader("Classification Result")
+            st.write(f"**{item['classification']}**")
             
-            # Display current classification
-            st.subheader("📰 News Classification Result")
-            st.write(f"The news article is classified as: **{classification}**")
+            # Display prediction probabilities
+            st.subheader("Prediction Confidence")
+            st.write(f"Probability of Fake News: **{item['fake_probability']*100:.2f}%**")
+            st.write(f"Probability of Real News: **{item['real_probability']*100:.2f}%**")
             
-            # Display model performance metrics
-            st.subheader("📊 Model Performance Metrics")
-            st.write(f"✅ **Accuracy:** {accuracy * 100:.2f}%")
-            st.write(f"✅ **Precision:** {precision * 100:.2f}%")
-            st.write(f"✅ **Recall:** {recall * 100:.2f}%")
-            st.write(f"✅ **F1-score:** {f1 * 100:.2f}%")
-            
-            # Display classification history
-            if len(st.session_state.classification_history) > 1:
-                st.subheader("📜 Previous Classifications")
-                for i, hist in enumerate(reversed(st.session_state.classification_history[:-1])):
-                    if i >= 5:  # Show only last 5 classifications
-                        break
-                    st.write(f"**{hist['timestamp']}**: \"{hist['text']}\" - **{hist['classification']}**")
-
-        else:
-            # Use chatbot for general dataset-related queries
-            result = query_gemini_api(model, df, user_input)
-
-            with st.chat_message("assistant"):
-                st.markdown(f"🤖 {result}")
-
-            st.session_state.messages.append({"role": "assistant", "content": result})
+            # Add a separator between entries
+            st.markdown("---")
+        
+        # Display overall model performance metrics only once at the bottom
+        st.header("Overall Model Performance")
+        st.write(f"✅ **Accuracy:** {accuracy * 100:.2f}%")
+        st.write(f"✅ **Precision:** {precision * 100:.2f}%")
+        st.write(f"✅ **Recall:** {recall * 100:.2f}%")
+        st.write(f"✅ **F1-score:** {f1 * 100:.2f}%")
