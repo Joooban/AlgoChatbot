@@ -67,31 +67,32 @@ def search_dataset(df, query):
 
 # Function to query Gemini AI
 def query_gemini_api(model, df, user_input):
-    tone = "Provide a concise and accurate response based on the dataset. Do not include HTML tags."
-
-    # Check for greetings
+    # Simple conversational responses
     if any(word in user_input.lower() for word in GREETING_KEYWORDS):
-        return "Hello! How can I assist you today?"
-
-    # Check for farewells
+        return "Hello! How can I assist you today?", None
     if any(word in user_input.lower() for word in GOODBYE_KEYWORDS):
-        return "You're welcome! Have a great day!"
-
-    # If input is long (likely a news article), classify it
-    if len(user_input.split()) > 5:
+        return "You're welcome! Have a great day!", None
+    
+    # Classify longer inputs as news articles
+    if len(user_input.split()) > 20:  # More realistic threshold
         classification = classify_news(model, user_input)
-        return f"The news article you entered is classified as: **{classification}**"
-
-    # Search dataset for relevant information
-    dataset_response = search_dataset(df, user_input)
-
-    # Query Gemini AI
+        return f"The news article is classified as: **{classification}**", classification
+        
+    # For shorter queries, use Gemini with dataset context
+    dataset_info = search_dataset(df, user_input)
+    if dataset_info == "Sorry, I couldn't find relevant information in the dataset.":
+        # No relevant data found, just use Gemini directly
+        context = "Provide information about fake news detection"
+    else:
+        context = f"Based on this dataset information: {dataset_info}"
+    
     ai_model = genai.GenerativeModel("models/gemini-1.5-flash-8b")
-    response = ai_model.generate_content([f"{tone}. Based on this dataset information: {dataset_response}, answer the query: {user_input}."])
+    response = ai_model.generate_content([
+        f"Provide a concise and accurate response. {context}, answer the query: {user_input}."
+    ])
+    
+    return response.text if response else "I couldn't generate a response.", None
 
-    return response.text if response else "I couldn't generate a response."
-
-# Function to handle Streamlit Chat UI
 # Function to handle Streamlit Chat UI
 def handle_conversation(dataset_path):
     df, model, accuracy, precision, recall, f1 = load_dataset(dataset_path)
